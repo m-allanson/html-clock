@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="utf-8">
+    <style type="text/css" media="screen">
+      /** @define Clock; use strict
+       *
+       * 1. Allow flexible width and 1:1 aspect ratio
+       */
+
+      .Clock {
+        opacity: 0;
+        padding-bottom: 100%; /* 1 */
+        position: relative;
+        transition: opacity 0.5s ease-in;
+        width: 100%;
+        z-index: -1;
+      }
+
+      .Clock.is-visible {
+        opacity: 1;
+      }
+
+      .Clock.is-ready .Clock-minuteHand {
+        transition: transform 0.5s cubic-bezier(0.4, 2.08, 0.55, 0.44);
+      }
+
+      .Clock.is-ready .Clock-secondHand {
+        transition: transform 0.2s cubic-bezier(0.4, 2.08, 0.55, 0.44);
+      }
+
+      .Clock-face {
+        background: url("./clock-face.svg") center center no-repeat;
+        background-size: cover;
+        bottom: 0;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+
+      .Clock-center {
+        background-color: #000;
+        border-radius: 100%;
+        bottom: 0;
+        height: 4%;
+        left: 0;
+        margin: auto;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 4%;
+      }
+
+      .Clock-hourHand {
+        animation: rotate 43200s infinite linear;
+        background-color: #000;
+        bottom: 50%;
+        height: 28%;
+        left: 48%;
+        position: absolute;
+        transform-origin: 50% 100%;
+        width: 4%;
+      }
+
+      .Clock-minuteHand {
+        background-color: #000;
+        bottom: 50%;
+        height: 33%;
+        left: 48%;
+        position: absolute;
+        transform-origin: 50% 100%;
+        width: 4%;
+      }
+
+      .Clock-secondHand {
+        background-color: #000;
+        bottom: 50%;
+        height: 36%;
+        left: 49%;
+        position: absolute;
+        transform-origin: 50% 100%;
+        transition: none;
+        width: 2%;
+        z-index: 10;
+      }
+
+      @keyframes rotate {
+        100% {
+        transform: rotateZ(360deg);
+        }
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="Clock">
+      <div class="Clock-face">
+      <div class="Clock-hourHand"></div>
+      <div class="Clock-minuteHand"></div>
+      <div class="Clock-secondHand"></div>
+      <div class="Clock-center"></div>
+      </div>
+    </div>
+    <script type="text/javascript">
+      var Clock = (function () {
+        var clock = document.querySelector('.Clock');
+        var hourHand = document.querySelector('.Clock-hourHand');
+        var minuteHand = document.querySelector('.Clock-minuteHand');
+        var secondHand = document.querySelector('.Clock-secondHand');
+        var date = new Date();
+        var time = {
+          hours: date.getHours(),
+          minutes: date.getMinutes(),
+          seconds: date.getSeconds()
+        };
+
+        function init() {
+          // Set all hands to correct starting position
+          initHourHand(time['minutes'], time['hours']);
+          rotate(minuteHand, toDegrees(time['minutes']));
+          rotate(secondHand, toDegrees(time['seconds']));
+
+          clock.offsetHeight;
+          clock.classList.add('is-ready');
+
+          setInterval(function () {
+            var now = new Date();
+            var minutes = now.getMinutes();
+            var seconds = now.getSeconds();
+
+            if (seconds !== time['seconds']) {
+              time['seconds'] = seconds;
+              update(secondHand, seconds);
+            }
+
+            if (minutes !== time['minutes']) {
+              time['minutes'] = minutes;
+              update(minuteHand, minutes);
+            }
+          }, 150);
+        };
+
+        function onLoad() {
+          clock.classList.add('is-visible');
+        }
+
+        /**
+         * Update hand position.
+         *
+         * @param  {DOMElement} hand  The clock hand to be updates
+         * @param  {int} units A position between 0 and 59
+         */
+        function update(hand, units) {
+          if (units === 0) { resetRotation(hand); }
+          rotate(hand, toDegrees(units));
+        };
+
+        /**
+         * Enables smooth clockwise CSS transition from 356 degrees to 0 degrees.
+         *
+         * Works by removing the transitions from the element, resetting the
+         * element rotation to -6 degrees, forcing a reflow and then reapplying
+         * the transition class.
+         *
+         * See: http://stackoverflow.com/q/11131875
+         *
+         * @param {DOMElement} el Element to be rotated
+         */
+        function resetRotation(el) {
+          el.style.transition = 'none';
+          rotate(el, '-6');
+          clock.offsetHeight; // forces reflow
+          el.style.transition = '';
+        };
+
+        /**
+         * Set the hour hand to correct starting position.
+         * @param  {int} m minutes past the hour
+         * @param  {int} h hours
+         */
+        function initHourHand(m, h) {
+          var degrees = (h * 30) + (m / 2);
+          rotate(hourHand, degrees);
+        };
+
+        function rotate(el, degrees) {
+          el.style.transform = 'rotateZ(' + degrees + 'deg)';
+        };
+
+        function toDegrees(minutes) {
+          return minutes * 6;
+        };
+
+        return {
+          init: init,
+          onLoad: onLoad
+        };
+      }());
+      // ------------------------------------------------------------
+      Clock.init();
+      window.onLoad = Clock.onLoad();
+    </script>
+  </body>
+</html>
+
